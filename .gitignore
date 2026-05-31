@@ -1,0 +1,15 @@
+# Ignored heavy retail CCTV video assets
+*.zip
+*.mp4
+data/CCTV Footage/
+
+# local database
+store_intelligence.db
+
+# Python & testing artifacts
+__pycache__/
+*.pyc
+.pytest_cache/
+.virtualenv/
+venv/
+.env

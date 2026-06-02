@@ -4,27 +4,29 @@
 
 An end-to-end computer vision and real-time store analytics platform built for **Apex Retail** to measure and optimize **Offline Store Conversion Rate** by bridging the retail store data blind spot.
 
-Repository URL: [https://github.com/PrakharShukla42/Store-Intelligence-Development](https://github.com/PrakharShukla42/Store-Intelligence-Development)
+### 🌐 Live Cloud Deployment (Production)
+
+The platform is fully configured and live-deployed on Render with zero local setup required for immediate review:
+* 🖥️ **Live Glassmorphic Dashboard (UI):** [https://store-intelligence-api-a89a.onrender.com/](https://store-intelligence-api-a89a.onrender.com/)
+* 🔌 **Interactive Swagger API Docs (OpenAPI):** [https://store-intelligence-api-a89a.onrender.com/docs](https://store-intelligence-api-a89a.onrender.com/docs)
+* ⚡ **Live Ingestion Seeding:** The web dashboard features an interactive **`⚡ Run Ingest Stream`** button in the header. Clicking it triggers a live simulated shopper behavioral feed directly into the cloud database, immediately computing metrics, conversion rates, and updating the zonal heatmaps in real-time!
 
 ---
 
+## 🚀 Quick Start (Local Run in 1 Command)
 
-## 🚀 Quick Start (Under 5 Commands)
-
-Deploy the entire platform (API, SQLite Database, and Live Glassmorphic Dashboard) with a single command:
+Deploy the entire platform (FastAPI, SQLite Database, and Live Glassmorphic Dashboard) with a single docker-compose command:
 
 ```bash
-# 1. Start the API and Dashboard services
+# 1. Build and start the services
 docker compose up --build -d
-
-# 2. Run the behavioral detection pipeline simulator to stream store events
-# (This automatically aggregates and matches the historical POS transactions)
-./pipeline/run.sh
 ```
 
 Done! Open your browser and navigate to:
-- **Live Web Dashboard (Part E Bonus)**: [http://localhost:8000](http://localhost:8000)
-- **Interactive Swagger API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
+* **Live Web Dashboard:** [http://localhost:8000](http://localhost:8000)
+* **Interactive Swagger API Docs:** [http://localhost:8000/docs](http://localhost:8000/docs)
+* **Ingest simulated shopper streams locally:** Click **`⚡ Run Ingest Stream`** on the local dashboard or run the pipeline: `./pipeline/run.sh`
+
 
 ---
 

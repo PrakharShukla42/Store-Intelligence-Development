@@ -446,6 +446,40 @@
         .feed-line.ingest { border-color: var(--indigo); color: #818cf8; }
         .feed-line.pos { border-color: var(--emerald); color: #34d399; }
         .feed-line.sys { border-color: var(--cyan); color: #38bdf8; }
+
+        /* Glowing Seed Button Styles */
+        .seed-btn {
+            background: linear-gradient(135deg, var(--indigo) 0%, var(--cyan) 100%);
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-family: var(--font-outfit);
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            outline: none;
+        }
+        .seed-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px rgba(6, 182, 212, 0.6);
+        }
+        .seed-btn:active {
+            transform: translateY(0);
+        }
+        .seed-btn.loading {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            color: var(--text-secondary);
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
     </style>
 </head>
 <body>
@@ -456,6 +490,7 @@
             <p>Real-Time Store Intelligence Platform &middot; Store ST1008 (Brigade Bangalore)</p>
         </div>
         <div class="header-controls">
+            <button class="seed-btn" id="seedDataBtn" onclick="runLiveSeeder()">⚡ Run Ingest Stream</button>
             <div class="status-badge">
                 <span class="dot"></span>
                 <span>LIVE FEED ACTIVE</span>
@@ -706,6 +741,45 @@
             } catch(e){}
         }
         setInterval(fetchIngestLogs, 4000);
+
+        async function runLiveSeeder() {
+            const btn = document.getElementById('seedDataBtn');
+            if (btn.classList.contains('loading')) return;
+            
+            btn.classList.add('loading');
+            btn.innerText = "⏳ Ingesting Feed...";
+            
+            const feedLogs = document.getElementById('feedLogs');
+            const sysLine = document.createElement('div');
+            sysLine.className = 'feed-line sys';
+            sysLine.innerText = `[${new Date().toLocaleTimeString()}] [SYSTEM] Triggering database live event-stream ingestion...`;
+            feedLogs.appendChild(sysLine);
+            feedLogs.scrollTop = feedLogs.scrollHeight;
+            
+            try {
+                const res = await fetch(`/stores/${storeId}/seed`, { method: 'POST' });
+                const data = await res.json();
+                
+                const completeLine = document.createElement('div');
+                completeLine.className = 'feed-line sys';
+                completeLine.innerText = `[${new Date().toLocaleTimeString()}] [SYSTEM] Ingestion complete: ${data.message}`;
+                feedLogs.appendChild(completeLine);
+                feedLogs.scrollTop = feedLogs.scrollHeight;
+                
+                // Fetch fresh metrics immediately
+                await fetchMetrics();
+            } catch (err) {
+                console.error("Failed to seed:", err);
+                const errLine = document.createElement('div');
+                errLine.className = 'feed-line sys';
+                errLine.style.color = 'var(--rose)';
+                errLine.innerText = `[${new Date().toLocaleTimeString()}] [ERROR] Seeder failed: ${err.message}`;
+                feedLogs.appendChild(errLine);
+            } finally {
+                btn.classList.remove('loading');
+                btn.innerText = "⚡ Run Ingest Stream";
+            }
+        }
     </script>
 </body>
 </html>

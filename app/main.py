@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from .database import engine, Base, get_db
 from .db_models import DBStoreEvent
 from .models import StoreEvent, IngestResponse
-from .crud import ingest_events_batch, import_pos_csv
+from .crud import ingest_events_batch, import_pos_csv, seed_store_events
 from .metrics import calculate_store_metrics
 from .funnel import calculate_store_funnel
 from .heatmap import calculate_store_heatmap
@@ -72,11 +72,11 @@ async def structured_logging_middleware(request: Request, call_next):
     logger.info(json.dumps(log_data))
     return response
 
-# Automatically load POS transactions on startup
+# Automatically load POS transactions and pre-seed demo data on startup
 @app.on_event("startup")
-def load_pos_data():
+def startup_events():
     db = next(get_db())
-    # Find the POS transactions CSV
+    # 1. Ingest POS baseline CSV
     csv_candidates = [
         "Brigade_Bangalore_10_April_26 (1)bc6219c.csv",
         "../Brigade_Bangalore_10_April_26 (1)bc6219c.csv",
@@ -90,6 +90,15 @@ def load_pos_data():
                 break
             except Exception as e:
                 print(f"Failed to load POS CSV: {e}")
+    
+    # 2. Automatically pre-seed behavioral shopper events if DB is empty
+    event_count = db.query(DBStoreEvent).count()
+    if event_count == 0:
+        print("Database has 0 events on startup. Pre-seeding baseline simulated shopper events...")
+        try:
+            seed_store_events(db, "ST1008")
+        except Exception as e:
+            print(f"Failed to pre-seed events: {e}")
 
 # Serves the live web dashboard
 @app.get("/", response_class=HTMLResponse)
@@ -175,6 +184,17 @@ async def get_anomalies(store_id: str, db: Session = Depends(get_db)):
         return anomalies
     except Exception as e:
         raise HTTPException(status_code=503, detail={"error": "Database service unavailable", "details": str(e)})
+
+@app.post("/stores/{store_id}/seed")
+async def seed_demo(store_id: str, db: Session = Depends(get_db)):
+    """
+    Manually triggers a real-time event simulation feed directly into the database.
+    """
+    try:
+        count = seed_store_events(db, store_id)
+        return {"status": "success", "message": f"Successfully seeded {count} events for store {store_id}."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to seed demo data: {str(e)}")
 
 @app.get("/health")
 async def health_check(db: Session = Depends(get_db)):

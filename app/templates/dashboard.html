@@ -490,6 +490,12 @@
             <p>Real-Time Store Intelligence Platform &middot; Store ST1008 (Brigade Bangalore)</p>
         </div>
         <div class="header-controls">
+            <select class="store-selector" id="shopperCountSelect" style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); font-weight: 500;">
+                <option value="13">13 Shoppers (Baseline)</option>
+                <option value="30">30 Shoppers</option>
+                <option value="50">50 Shoppers</option>
+                <option value="100">100 Shoppers</option>
+            </select>
             <button class="seed-btn" id="seedDataBtn" onclick="runLiveSeeder()">⚡ Run Ingest Stream</button>
             <div class="status-badge">
                 <span class="dot"></span>
@@ -746,18 +752,20 @@
             const btn = document.getElementById('seedDataBtn');
             if (btn.classList.contains('loading')) return;
             
+            const numShoppers = document.getElementById('shopperCountSelect').value || 13;
+            
             btn.classList.add('loading');
             btn.innerText = "⏳ Ingesting Feed...";
             
             const feedLogs = document.getElementById('feedLogs');
             const sysLine = document.createElement('div');
             sysLine.className = 'feed-line sys';
-            sysLine.innerText = `[${new Date().toLocaleTimeString()}] [SYSTEM] Triggering database live event-stream ingestion...`;
+            sysLine.innerText = `[${new Date().toLocaleTimeString()}] [SYSTEM] Triggering database live event-stream ingestion for ${numShoppers} shoppers...`;
             feedLogs.appendChild(sysLine);
             feedLogs.scrollTop = feedLogs.scrollHeight;
             
             try {
-                const res = await fetch(`/stores/${storeId}/seed`, { method: 'POST' });
+                const res = await fetch(`/stores/${storeId}/seed?num_shoppers=${numShoppers}`, { method: 'POST' });
                 const data = await res.json();
                 
                 const completeLine = document.createElement('div');

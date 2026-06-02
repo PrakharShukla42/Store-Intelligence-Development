@@ -109,9 +109,10 @@ def import_pos_csv(db: Session, csv_path: str) -> int:
     print(f"Aggregated {len(transactions)} transactions, inserted {inserted} new ones.")
     return inserted
 
-def seed_store_events(db: Session, store_id: str) -> int:
+def seed_store_events(db: Session, store_id: str, num_shoppers: int = 13) -> int:
     """
     Directly seeds high-fidelity shopper behavioral events into the SQLite database.
+    Supports dynamic generation of extra random shoppers to scale data.
     """
     # Clear any existing events to prevent duplicates on manual trigger
     db.query(DBStoreEvent).filter(DBStoreEvent.store_id == store_id).delete()
@@ -256,6 +257,56 @@ def seed_store_events(db: Session, store_id: str) -> int:
             f"VIS_spike0{i}", spike_start + timedelta(seconds=i*5),
             [{"zone": "Accessories", "dwell": 30}, {"zone": "BILLING", "dwell": 300, "queue_depth": i+1}]
         )
+
+    # 7. Dynamic Generation of Additional Shoppers (Optional)
+    if num_shoppers > 13:
+        import random
+        extra = num_shoppers - 13
+        zones_pool = ["Faces Canada", "Renee NY Bae", "DermDoc", "Minimalist", "Good Vibes", "The Face Shop", "Lakme Skin", "Streax", "Alps Goodness", "Maybelline"]
+        
+        # Fetch actual POS commits to align converted shopper timestamps for perfect conversion calculations
+        pos_commits = db.query(DBPOSCommit).filter(DBPOSCommit.store_id == store_id).all()
+
+        for i in range(extra):
+            visitor_id = f"VIS_rand_{random.randint(10000, 99999)}"
+            completes_purchase = random.choice([True, False])
+            
+            # Determine random path
+            path = []
+            num_steps = random.randint(1, 4)
+            chosen_zones = random.sample(zones_pool, min(num_steps, len(zones_pool)))
+            for zone in chosen_zones:
+                path.append({"zone": zone, "dwell": random.randint(20, 150)})
+                
+            if completes_purchase:
+                # Add billing step
+                path.append({"zone": "BILLING", "dwell": random.randint(60, 180), "queue_depth": random.randint(1, 3)})
+                
+                # Align start time with a random POS commit to ensure 100% correlation
+                if pos_commits:
+                    random_commit = random.choice(pos_commits)
+                    # We want billing entry to be within 5 mins before POS commit
+                    path_delay_sec = sum(step["dwell"] for step in path[:-1]) + 5 * len(path[:-1]) + 5
+                    start_time = random_commit.timestamp - timedelta(seconds=path_delay_sec + random.randint(30, 240))
+                else:
+                    hour = random.randint(10, 21)
+                    minute = random.randint(0, 59)
+                    start_time = base_date + timedelta(hours=hour, minutes=minute)
+            else:
+                # Normal browsing or checkout abandonment
+                abandon_checkout = random.choice([True, False])
+                if abandon_checkout:
+                    path.append({"zone": "BILLING", "dwell": random.randint(60, 200), "queue_depth": random.randint(3, 5)})
+                
+                hour = random.randint(10, 21)
+                minute = random.randint(0, 59)
+                start_time = base_date + timedelta(hours=hour, minutes=minute)
+                
+            queue_simulated_shopper(
+                visitor_id, start_time, path,
+                completes_purchase=completes_purchase,
+                abandon_checkout=abandon_checkout if not completes_purchase else False
+            )
 
     # Save to SQLite
     for ev in events_to_add:

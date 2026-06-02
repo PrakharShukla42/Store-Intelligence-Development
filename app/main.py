@@ -102,7 +102,15 @@ def startup_events():
 
 # Serves the live web dashboard
 @app.get("/", response_class=HTMLResponse)
-async def serve_dashboard():
+async def serve_dashboard(db: Session = Depends(get_db)):
+    # Clear existing events so it starts fresh at 0 when the page is loaded/refreshed
+    try:
+        db.query(DBStoreEvent).delete()
+        db.commit()
+    except Exception as e:
+        print(f"Failed to clear events on dashboard load: {e}")
+        db.rollback()
+
     # We will embed the HTML directly or read it from a file
     dashboard_path = os.path.join(os.path.dirname(__file__), "templates", "dashboard.html")
     if os.path.exists(dashboard_path):
@@ -186,12 +194,12 @@ async def get_anomalies(store_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=503, detail={"error": "Database service unavailable", "details": str(e)})
 
 @app.post("/stores/{store_id}/seed")
-async def seed_demo(store_id: str, db: Session = Depends(get_db)):
+async def seed_demo(store_id: str, num_shoppers: int = 13, db: Session = Depends(get_db)):
     """
     Manually triggers a real-time event simulation feed directly into the database.
     """
     try:
-        count = seed_store_events(db, store_id)
+        count = seed_store_events(db, store_id, num_shoppers=num_shoppers)
         return {"status": "success", "message": f"Successfully seeded {count} events for store {store_id}."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to seed demo data: {str(e)}")

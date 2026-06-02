@@ -1,10 +1,13 @@
 # Apex Store Intelligence - Retail Analytics Platform
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/PrakharShukla42/Store-Intelligence-Development)
+
 An end-to-end computer vision and real-time store analytics platform built for **Apex Retail** to measure and optimize **Offline Store Conversion Rate** by bridging the retail store data blind spot.
 
 Repository URL: [https://github.com/PrakharShukla42/Store-Intelligence-Development](https://github.com/PrakharShukla42/Store-Intelligence-Development)
 
 ---
+
 
 ## 🚀 Quick Start (Under 5 Commands)
 

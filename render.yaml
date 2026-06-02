@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: store-intelligence
+    env: docker
+    plan: free
+    port: 8000
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: PYTHONUNBUFFERED
+        value: "1"
